@@ -1,9 +1,13 @@
 import React from 'react';
-import {Button, Text, View} from 'react-native';
-import MainStack from './src/Navigation';
-
+import MainStack from './src/navigation';
+import {Provider} from 'react-redux';
+import store from './src/redux/store';
 const App = () => {
-  return <MainStack />;
+  return (
+    <Provider store={store}>
+      <MainStack />
+    </Provider>
+  );
 };
 
 export default App;
