@@ -1,39 +1,55 @@
-import React, {useState, useCallback, useEffect} from 'react';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import React, {useState, useCallback, useEffect, useLayoutEffect} from 'react';
 import {StyleSheet} from 'react-native';
 import {GiftedChat, InputToolbar} from 'react-native-gifted-chat';
 import {useDispatch, useSelector} from 'react-redux';
-import {changeMsg} from '../../redux/action';
-import {CHANGEMSG} from '../../redux/action/keys';
-
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 export function Chat() {
+  const {setOptions} = useNavigation();
   const [messages, setMessages] = useState([]);
-  const dispatch = useDispatch();
-  const msg = useSelector(state => state?.msg);
-  useEffect(
-    () =>
-      setMessages([
-        {
-          _id: 1,
-          text: 'Hello developer',
-          createdAt: new Date(),
-          user: {
-            _id: 2,
-            name: 'React Native',
-            avatar: 'https://placeimg.com/140/140/any',
-          },
-        },
-      ]),
-    [],
-  );
-  useEffect(() => {
-    dispatch(changeMsg({type: CHANGEMSG, payload: messages}));
-  }, [dispatch, messages]);
-  console.log('msg: ', msg);
 
-  const onSend = useCallback((messages = []) => {
-    setMessages(previousMessages =>
-      GiftedChat.append(previousMessages, messages),
-    );
+  const {item} = useRoute().params;
+  console.log(item);
+
+  const getChatGroup = () => {
+    firestore()
+      .collection('chat')
+      .doc('group')
+      .collection('messages')
+      .orderBy('createdAt', 'desc')
+      .onSnapshot(val => {
+        return setMessages(
+          val.docs.map(i => ({
+            _id: i.id,
+            ...i.data(),
+          })),
+        );
+      });
+  };
+  useLayoutEffect(() => {
+    setOptions({
+      headerTitle: item.name,
+    });
+  });
+  useEffect(() => {
+    getChatGroup();
+  }, []);
+
+  const onSend = useCallback((message = '') => {
+    firestore()
+      .collection('chat')
+      .doc('group')
+      .collection('messages')
+      .add({
+        text: message,
+        createdAt: new Date().getTime(),
+        user: {
+          _id: auth().currentUser?.uid,
+          name: auth().currentUser?.displayName,
+          avatar: 'https://placeimg.com/140/140/any',
+        },
+      });
   }, []);
   function renderInputToolbar(props) {
     return (
@@ -47,15 +63,15 @@ export function Chat() {
 
   return (
     <GiftedChat
-      messages={msg}
+      messages={messages}
       // renderBubble={renderBubble}
-      onSend={val => onSend(val)}
+      onSend={val => onSend(val[0].text)}
       alwaysShowSend
       messagesContainerStyle={styles.messagesContainerStyle}
       renderInputToolbar={renderInputToolbar}
       placeholder="Type your message..."
       user={{
-        _id: 1,
+        _id: auth().currentUser?.uid.toString() || '0',
       }}
     />
   );

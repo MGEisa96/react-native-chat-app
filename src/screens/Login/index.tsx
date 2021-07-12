@@ -1,45 +1,75 @@
 import {useNavigation} from '@react-navigation/native';
 import * as React from 'react';
-import {View, StyleSheet, Button} from 'react-native';
-import {TextInput} from 'react-native-gesture-handler';
+import {View, StyleSheet, Button, Text, Alert} from 'react-native';
 import auth from '@react-native-firebase/auth';
+import {TextInput} from 'react-native-gesture-handler';
+import firestore from '@react-native-firebase/firestore';
+import {current} from '@reduxjs/toolkit';
 const Login = () => {
-  const [user, setUser] = React.useState();
-  const [userName, setUserName] = React.useState('');
-  const [loading, setLoading] = React.useState(true);
-  const onAuthStateChanged = value => {
-    setUser(value);
-    setLoading(false);
-  };
-  React.useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber; // unsubscribe on unmount
-  }, []);
-
-  const onAuth = () => {
+  const navigation = useNavigation();
+  const [email, setEmail] = React.useState('');
+  const [passWord, setPassWord] = React.useState('');
+  const [name, setName] = React.useState('');
+  const [singUp, setSingUp] = React.useState(false);
+  const handelLogin = () => {
     auth()
-      .signInAnonymously()
+      .signInWithEmailAndPassword(email, passWord)
       .then(() => {
-        navigate('Home');
-        console.log('User signed in anonymously');
+        Alert.alert('User account created & signed in!');
       })
       .catch(error => {
-        if (error.code === 'auth/operation-not-allowed') {
-          console.log('Enable anonymous in your firebase console.');
-        }
-
-        console.error(error);
+        Alert.alert(error.message);
       });
   };
-  const {navigate} = useNavigation();
+  const onSigneUp = () => {
+    auth()
+      .createUserWithEmailAndPassword(email, passWord)
+      .then(() => {
+        auth().currentUser?.updateProfile({
+          displayName: name,
+        });
+
+        firestore().collection('users').add({
+          name,
+          email,
+        });
+      })
+      .catch(error => {
+        Alert.alert(error.message);
+      });
+  };
+
   return (
     <View style={styles.container}>
+      {singUp && (
+        <TextInput
+          placeholder="Your Name"
+          onChangeText={value => setName(value)}
+          style={styles.input}
+        />
+      )}
       <TextInput
-        placeholder="User Name"
+        placeholder="Your Email"
         style={styles.input}
-        onChangeText={val => setUserName(val)}
+        onChangeText={value => setEmail(value)}
       />
-      <Button title={'Go'} onPress={() => onAuth()} />
+      <TextInput
+        placeholder="Password"
+        style={styles.input}
+        onChangeText={value => setPassWord(value)}
+        secureTextEntry={true}
+      />
+      <Button
+        onPress={() => {
+          singUp ? setSingUp(false) : handelLogin();
+        }}
+        title={'LogIn'}
+      />
+      <Text style={{marginTop: 20}}> Or </Text>
+      <Button
+        onPress={singUp ? () => onSigneUp() : () => setSingUp(true)}
+        title={singUp ? 'Submit' : 'SingUp'}
+      />
     </View>
   );
 };
@@ -49,17 +79,32 @@ export default Login;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffff',
-    padding: 20,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 30,
+  },
+  text: {
+    color: '#fff',
+    alignSelf: 'center',
+  },
+  button: {
+    width: 200,
+    justifyContent: 'center',
+    marginVertical: 20,
+    shadowOpacity: 0.15,
+    shadowOffset: {
+      width: 1,
+      height: 6,
+    },
   },
   input: {
-    width: '100%',
-    height: 50,
+    width: '95%',
+    height: 60,
+    marginVertical: 15,
+    borderRadius: 25,
     borderWidth: 1,
-    borderRadius: 18,
-    padding: 10,
-    marginVertical: 20,
+    alignItems: 'center',
+    paddingHorizontal: 15,
   },
 });

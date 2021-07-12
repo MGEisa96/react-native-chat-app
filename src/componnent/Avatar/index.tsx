@@ -14,9 +14,7 @@ const Avatar = ({avatar, avatarStyle, disabled, onPress}: AvatarProps) => {
     <TouchableOpacity onPress={onPress} disabled={disabled}>
       <Image
         source={{
-          uri:
-            avatar ||
-            'https://www.kindpng.com/picc/m/78-786207_user-avatar-png-user-avatar-icon-png-transparent.png',
+          uri: avatar || 'https://i.pravatar.cc/300',
         }}
         style={[styles.image, avatarStyle]}
       />

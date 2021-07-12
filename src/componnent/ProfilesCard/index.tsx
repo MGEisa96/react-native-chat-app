@@ -6,20 +6,17 @@ import styles from './styles';
 interface ProfilesCardProps {
   onPress: () => void;
   disabled: boolean;
+  item: {name: string};
 }
 
-const ProfilesCard = ({onPress}: ProfilesCardProps) => {
+const ProfilesCard = ({onPress, item}: ProfilesCardProps) => {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <Avatar avatarStyle={styles.imageStyle} disabled={true} />
       <View style={styles.textwrapparStyle}>
         <View style={styles.rowViewStyle}>
-          <Text style={styles.nameTextStyle}>Justin O'Moore</Text>
-          <Text style={styles.timeStyle}>19:00 </Text>
+          <Text style={styles.nameTextStyle}>{item.name}</Text>
         </View>
-        <Text style={styles.msgTextStyle} numberOfLines={1}>
-          sadasdsadsadsadasdsadasdasdadsd
-        </Text>
       </View>
     </TouchableOpacity>
   );
